@@ -1,80 +1,52 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 export default function HeroImageReveal() {
   const [revealPercent, setRevealPercent] = useState(50);
 
-  // Desktop: السحب بالماوس
+  const x = useMotionValue(50);
+  const smoothX = useSpring(x, { stiffness: 100, damping: 30 });
+
+  // تعديل هنا: عكس اتجاه الكشف
+  // الآن عندما تكون val قريبة من 0، يتم كشف الصورة اليمنى بالكامل
+  // وعندما تكون val قريبة من 100، يتم إخفاء الصورة اليمنى بالكامل
+  const clip = useTransform(smoothX, (val) => `inset(0 0 0 ${100 - val}%)`);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    setRevealPercent(Math.max(0, Math.min(100, x)));
+    const mouseX = ((e.clientX - rect.left) / rect.width) * 100;
+    x.set(mouseX);
+    setRevealPercent(mouseX);
   };
 
-  // Mobile: السحب عبر Slider
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRevealPercent(Number(e.target.value));
+    const value = Number(e.target.value);
+    x.set(value);
+    setRevealPercent(value);
   };
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      {/* المنطقة الرئيسية */}
       <div
         onMouseMove={handleMouseMove}
-        className="relative w-full h-full cursor-ew-resize md:cursor-ew-resize"
+        className="relative w-full h-full cursor-ew-resize"
       >
         {/* Before */}
         <div className="absolute inset-0 w-full h-full">
-          <Image
-            src="/image1.png"
-            alt="Before"
-            fill
-            priority
-            className="object-cover"
-            quality={90}
-          />
+          <Image src="/image1.png" alt="Before" fill priority className="object-cover" />
         </div>
 
         {/* After */}
-        <motion.div
-          className="absolute inset-0 w-full h-full"
-          style={{ clipPath: `inset(0 ${100 - revealPercent}% 0 0)` }}
-          transition={{ type: "tween", duration: 0.15, ease: "easeOut" }}
+        <motion.div 
+          className="absolute inset-0 w-full h-full" 
+          style={{ 
+            clipPath: clip,
+            transition: "clip-path 0.3s ease-out"
+          }}
         >
-          <Image
-            src="/image2.png"
-            alt="After"
-            fill
-            priority
-            className="object-cover"
-            quality={90}
-          />
-        </motion.div>
-
-        {/* الخط الفاصل */}
-        <motion.div
-          className="absolute top-0 bottom-0 w-1 bg-white shadow-2xl z-10"
-          style={{ left: `${revealPercent}%` }}
-          transition={{ type: "tween", duration: 0.15, ease: "easeOut" }}
-        >
-          {/* الدائرة المتحركة (السهمين) تظهر فقط على Desktop */}
-          <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white rounded-full shadow-xl flex items-center justify-center border-4 border-gray-200">
-            <svg
-              className="w-8 h-8 text-gray-700"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8 9l4-4 4 4m0 6l-4 4-4-4"
-              />
-            </svg>
-          </div>
+          <Image src="/image2.png" alt="After" fill priority className="object-cover" />
         </motion.div>
 
         {/* Labels */}
