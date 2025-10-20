@@ -6,7 +6,7 @@ export default function DesignerDeveloperReveal() {
   const [mouseX, setMouseX] = useState(50);
   const smoothRef = useRef(50);
   const [smoothX, setSmoothX] = useState(50);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | null>(null);
 
   // ✅ استخدم RAF واحد فقط وقلل re-render
   useEffect(() => {
